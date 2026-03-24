@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -59,16 +60,16 @@ export function AppHeader({ user }: AppHeaderProps) {
               segment.charAt(0).toUpperCase() + segment.slice(1);
 
             return (
-              <BreadcrumbItem key={href}>
-                {!isLast ? (
-                  <>
+              <React.Fragment key={href}>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage>{label}</BreadcrumbPage>
+                  ) : (
                     <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
-                    <BreadcrumbSeparator />
-                  </>
-                ) : (
-                  <BreadcrumbPage>{label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+              </React.Fragment>
             );
           })}
         </BreadcrumbList>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryProvider } from '@/components/providers/query-provider';
 
 export const metadata: Metadata = {
   title: "Coinbase — Demo Trading",
@@ -22,7 +23,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange>
           <TooltipProvider>
-            {children}
+            <QueryProvider>
+              {children}
+            </QueryProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>
