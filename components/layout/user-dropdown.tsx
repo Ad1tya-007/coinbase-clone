@@ -1,9 +1,9 @@
 "use client"
 
+import { useTransition } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import {
-  Settings,
   LogOut,
   User,
   Moon,
@@ -12,6 +12,7 @@ import {
   Wallet,
   LifeBuoy,
   Monitor,
+  Loader2,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -28,9 +29,25 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { logoutAction } from "@/actions/auth"
 
-export function UserDropdown() {
+export interface AppUser {
+  firstName: string
+  email: string
+  initials: string
+}
+
+interface UserDropdownProps {
+  user: AppUser
+}
+
+export function UserDropdown({ user }: UserDropdownProps) {
   const { theme, setTheme } = useTheme()
+  const [isPending, startTransition] = useTransition()
+
+  function handleSignOut() {
+    startTransition(() => logoutAction())
+  }
 
   return (
     <DropdownMenu>
@@ -38,10 +55,10 @@ export function UserDropdown() {
         <button className="flex items-center gap-2 rounded-full pl-1 pr-2.5 py-1 hover:bg-accent transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Avatar className="h-7 w-7">
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-              JD
+              {user.initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium hidden sm:block">John</span>
+          <span className="text-sm font-medium hidden sm:block">{user.firstName}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
         </button>
       </DropdownMenuTrigger>
@@ -51,13 +68,16 @@ export function UserDropdown() {
           <div className="flex items-center gap-3 py-1">
             <Avatar className="h-9 w-9">
               <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                JD
+                {user.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col min-w-0">
-              <p className="font-semibold text-sm leading-none">John Doe</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">john@example.com</p>
-              <Badge variant="secondary" className="mt-1.5 w-fit text-xs h-4 px-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30">
+              <p className="font-semibold text-sm leading-none">{user.firstName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.email}</p>
+              <Badge
+                variant="secondary"
+                className="mt-1.5 w-fit text-xs h-4 px-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30"
+              >
                 Demo Account
               </Badge>
             </div>
@@ -123,8 +143,16 @@ export function UserDropdown() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-          <LogOut className="h-4 w-4 mr-2" />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+          onClick={handleSignOut}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4 mr-2" />
+          )}
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

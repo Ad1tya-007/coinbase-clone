@@ -1,22 +1,27 @@
 "use client"
 
-import { useState } from "react"
+import { useActionState, useState } from "react"
 import Link from "next/link"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { registerAction } from "@/actions/auth"
+
+const initialState = { error: "" }
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setIsLoading(true)
-    setTimeout(() => setIsLoading(false), 1500)
-  }
+  const [state, formAction, isPending] = useActionState(registerAction, initialState)
 
   return (
     <Card className="shadow-lg border-border/50">
@@ -28,19 +33,40 @@ export function RegisterForm() {
           <span className="font-semibold text-lg tracking-tight">Coinbase</span>
         </div>
         <CardTitle className="text-2xl font-bold">Create account</CardTitle>
-        <CardDescription>Start trading crypto with a $10,000 demo balance</CardDescription>
+        <CardDescription>
+          Start trading crypto with a $10,000 demo balance
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
+          {state.error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{state.error}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
-              <Input id="firstName" placeholder="John" required />
+              <Input
+                id="firstName"
+                name="firstName"
+                placeholder="John"
+                required
+                disabled={isPending}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last name</Label>
-              <Input id="lastName" placeholder="Doe" required />
+              <Input
+                id="lastName"
+                name="lastName"
+                placeholder="Doe"
+                required
+                disabled={isPending}
+              />
             </div>
           </div>
 
@@ -48,10 +74,12 @@ export function RegisterForm() {
             <Label htmlFor="email">Email address</Label>
             <Input
               id="email"
+              name="email"
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
               required
+              disabled={isPending}
             />
           </div>
 
@@ -60,10 +88,12 @@ export function RegisterForm() {
             <div className="relative">
               <Input
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Min. 8 characters"
                 autoComplete="new-password"
                 required
+                disabled={isPending}
               />
               <Button
                 type="button"
@@ -71,7 +101,7 @@ export function RegisterForm() {
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -94,8 +124,8 @@ export function RegisterForm() {
             .
           </p>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating account...

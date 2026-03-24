@@ -5,8 +5,14 @@ import { Bell } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { UserDropdown } from '@/components/layout/user-dropdown';
+import { UserDropdown, type AppUser } from '@/components/layout/user-dropdown';
 import { MobileNav } from '@/components/layout/mobile-nav';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,7 +31,11 @@ const routeLabels: Record<string, string> = {
   portfolio: 'Portfolio',
 };
 
-export function AppHeader() {
+interface AppHeaderProps {
+  user: AppUser;
+}
+
+export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
 
@@ -35,9 +45,9 @@ export function AppHeader() {
       <SidebarTrigger className="-ml-1 hidden md:flex" />
       {/* Mobile: hamburger sheet */}
       <div className="flex md:hidden">
-        <MobileNav />
+        <MobileNav user={user} />
       </div>
-      <Separator orientation="vertical" className="h-4" />
+      <Separator orientation="vertical" className="mx-1 my-2" />
 
       <Breadcrumb className="flex-1">
         <BreadcrumbList>
@@ -65,11 +75,17 @@ export function AppHeader() {
       </Breadcrumb>
 
       <div className="hidden md:flex items-center gap-1">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="h-4 mx-1" />
-        <UserDropdown />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Notifications</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="mx-1" />
+        <UserDropdown user={user} />
       </div>
     </header>
   );
