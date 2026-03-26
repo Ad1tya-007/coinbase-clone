@@ -6,13 +6,17 @@ function apiKey() {
   return process.env.NEXT_PUBLIC_COINGECKO_API ?? ""
 }
 
-async function cgFetch(path: string, params: Record<string, string> = {}) {
+async function cgFetch(
+  path: string,
+  params: Record<string, string> = {},
+  revalidate = 0
+) {
   const url = new URL(`${BASE}${path}`)
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
 
   const res = await fetch(url.toString(), {
     headers: { "x-cg-demo-api-key": apiKey() },
-    next: { revalidate: 0 }, // always fresh on server; React Query handles client caching
+    next: { revalidate }, // 0 = no cache (React Query handles client caching); pass >0 for server-side cache
   })
 
   if (res.status === 429) throw new Error("Rate limit reached — try again shortly.")
@@ -61,15 +65,19 @@ export interface CGMarketChart {
 
 // ─── Fetch functions ─────────────────────────────────────────────────────────
 
-export async function fetchMarkets(perPage = 100): Promise<CGMarket[]> {
-  return cgFetch("/coins/markets", {
-    vs_currency: "usd",
-    order: "market_cap_desc",
-    per_page: String(perPage),
-    page: "1",
-    sparkline: "true",
-    price_change_percentage: "24h",
-  })
+export async function fetchMarkets(perPage = 100, revalidate = 0): Promise<CGMarket[]> {
+  return cgFetch(
+    "/coins/markets",
+    {
+      vs_currency: "usd",
+      order: "market_cap_desc",
+      per_page: String(perPage),
+      page: "1",
+      sparkline: "true",
+      price_change_percentage: "24h",
+    },
+    revalidate
+  )
 }
 
 export async function fetchCoinDetail(coinId: string): Promise<CGCoin> {

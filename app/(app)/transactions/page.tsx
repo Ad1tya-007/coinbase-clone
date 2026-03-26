@@ -1,9 +1,6 @@
-import { MOCK_TRANSACTIONS } from "@/lib/mock-data"
-import { TransactionsTable } from "@/components/transactions/transactions-table"
+import { TransactionsView } from '@/components/transactions/transactions-view';
 
 export default function TransactionsPage() {
-  const transactions = MOCK_TRANSACTIONS
-
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
@@ -12,8 +9,7 @@ export default function TransactionsPage() {
           Complete history of all your trades
         </p>
       </div>
-
-      <TransactionsTable transactions={transactions} />
+      <TransactionsView />
     </div>
-  )
+  );
 }

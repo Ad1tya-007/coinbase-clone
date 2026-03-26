@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CoinChart } from "@/components/markets/coin-chart"
 import { TradePanel } from "@/components/markets/trade-panel"
 import { useCoinDetail } from "@/hooks/use-coin-detail"
+import { usePortfolio } from "@/hooks/use-portfolio"
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -71,6 +72,9 @@ interface CoinDetailViewProps {
 
 export function CoinDetailView({ coinId }: CoinDetailViewProps) {
   const { data: coin, isPending, isError, error, refetch } = useCoinDetail(coinId)
+  const { data: portfolio, isPending: portfolioLoading } = usePortfolio()
+
+  const holding = portfolio?.holdings.find((h) => h.coinId === coinId)
 
   const isPositive = (coin?.change24h ?? 0) >= 0
 
@@ -195,11 +199,13 @@ export function CoinDetailView({ coinId }: CoinDetailViewProps) {
             </Card>
           ) : coin ? (
             <TradePanel
+              coinId={coinId}
               coinName={coin.name}
               coinSymbol={coin.symbol}
               price={coin.price}
-              cashBalance={10000}
-              holding={0}
+              cashBalance={portfolio?.cashBalance}
+              holding={holding?.amount}
+              isLoading={portfolioLoading}
             />
           ) : null}
 
@@ -260,6 +266,45 @@ export function CoinDetailView({ coinId }: CoinDetailViewProps) {
                     </div>
                   </>
                 )}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {/* Your Position — only shown when user has a holding */}
+          {!portfolioLoading && holding && holding.amount > 0 && coin ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Your Position</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Amount held</span>
+                  <span className="font-medium font-mono">{holding.amount.toFixed(8)} {coin.symbol}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Current value</span>
+                  <span className="font-medium">{formatCurrency(holding.amount * coin.price)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Avg buy price</span>
+                  <span className="font-medium">{formatCurrency(holding.avgBuyPrice)}</span>
+                </div>
+                <Separator />
+                {(() => {
+                  const pnl = holding.amount * coin.price - holding.amount * holding.avgBuyPrice
+                  const pnlPct = holding.avgBuyPrice > 0 ? ((coin.price - holding.avgBuyPrice) / holding.avgBuyPrice) * 100 : 0
+                  const pos = pnl >= 0
+                  return (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Unrealised P&amp;L</span>
+                      <span className={`font-semibold ${pos ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                        {pos ? "+" : ""}{formatCurrency(pnl)} ({pos ? "+" : ""}{pnlPct.toFixed(2)}%)
+                      </span>
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           ) : null}
