@@ -30,7 +30,10 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useProfile } from '@/hooks/use-profile';
+import { usePortfolio } from '@/hooks/use-portfolio';
+import { useMarketData } from '@/hooks/use-market-data';
 import { Separator } from '@/components/ui/separator';
 
 // Custom hook for detecting media query match
@@ -74,6 +77,27 @@ export function MobileNav({ user }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+
+  // Live profile data (avatar + updated name/email)
+  const { data: profile } = useProfile();
+  const { data: portfolioData } = usePortfolio();
+  const { data: coins } = useMarketData();
+
+  const displayName  = profile?.firstName ?? user.firstName;
+  const displayEmail = profile?.email     ?? user.email;
+  const avatarUrl    = profile?.avatarUrl ?? null;
+
+  // Compute live portfolio value
+  const cashBalance = portfolioData?.cashBalance ?? 0;
+  const holdingsValue = (portfolioData?.holdings ?? []).reduce((sum, h) => {
+    const price = coins?.find((c) => c.id === h.coinId)?.price ?? 0;
+    return sum + h.amount * price;
+  }, 0);
+  const totalValue = cashBalance + holdingsValue;
+  const totalInvested = (portfolioData?.holdings ?? []).reduce((s, h) => s + h.amount * h.avgBuyPrice, 0);
+  const pnl = holdingsValue - totalInvested;
+  const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
+  const isPositive = pnlPct >= 0;
 
   // Detect if screen is >= md
   const isMdUp = useMediaQuery('(min-width: 768px)');
@@ -169,15 +193,21 @@ export function MobileNav({ user }: MobileNavProps) {
                 Portfolio Value
               </span>
             </div>
-            <p className="text-xl font-bold pl-6">$20,571.44</p>
+            <p className="text-xl font-bold pl-6">
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalValue)}
+            </p>
             <div className="flex items-center justify-between pl-6">
               <span className="text-xs text-muted-foreground">
                 All-time P&amp;L
               </span>
               <Badge
                 variant="secondary"
-                className="text-xs h-5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30">
-                +14.29%
+                className={`text-xs h-5 ${
+                  isPositive
+                    ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30'
+                    : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30'
+                }`}>
+                {isPositive ? '+' : ''}{pnlPct.toFixed(2)}%
               </Badge>
             </div>
           </div>
@@ -224,16 +254,17 @@ export function MobileNav({ user }: MobileNavProps) {
             onClick={handleNavClick}
             className="flex items-center gap-3 rounded-xl hover:bg-accent transition-colors p-2 -m-2">
             <Avatar className="h-9 w-9 shrink-0">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold leading-none truncate">
-                {user.firstName}
+                {displayName}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {user.email}
+                {displayEmail}
               </p>
             </div>
             <Settings className="h-4 w-4 text-muted-foreground shrink-0" />

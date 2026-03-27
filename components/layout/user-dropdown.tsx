@@ -27,9 +27,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { logoutAction } from "@/actions/auth"
+import { useProfile } from "@/hooks/use-profile"
 
 export interface AppUser {
   firstName: string
@@ -44,6 +45,12 @@ interface UserDropdownProps {
 export function UserDropdown({ user }: UserDropdownProps) {
   const { theme, setTheme } = useTheme()
   const [isPending, startTransition] = useTransition()
+  const { data: profile } = useProfile()
+
+  // Use live profile data when available, fall back to session-derived props
+  const displayName  = profile?.firstName ?? user.firstName
+  const displayEmail = profile?.email     ?? user.email
+  const avatarUrl    = profile?.avatarUrl ?? null
 
   function handleSignOut() {
     startTransition(() => logoutAction())
@@ -54,11 +61,12 @@ export function UserDropdown({ user }: UserDropdownProps) {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full pl-1 pr-2.5 py-1 hover:bg-accent transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Avatar className="h-7 w-7">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
               {user.initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium hidden sm:block">{user.firstName}</span>
+          <span className="text-sm font-medium hidden sm:block">{displayName}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
         </button>
       </DropdownMenuTrigger>
@@ -67,13 +75,14 @@ export function UserDropdown({ user }: UserDropdownProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex items-center gap-3 py-1">
             <Avatar className="h-9 w-9">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col min-w-0">
-              <p className="font-semibold text-sm leading-none">{user.firstName}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.email}</p>
+              <p className="font-semibold text-sm leading-none">{displayName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{displayEmail}</p>
               <Badge
                 variant="secondary"
                 className="mt-1.5 w-fit text-xs h-4 px-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30"
